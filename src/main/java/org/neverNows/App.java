@@ -17,19 +17,20 @@ public class App extends Application
 {
     public static void main( String[] args )
     {
-        System.out.println( "Hello World!" );
+        System.out.println( "Hello World!2" );
         Application.launch(args);
     }
 
 	@Override
 	public void start(Stage stage) throws Exception {
-		Button bt = new Button("boton");
+		
+		Button bt = new Button("boton2");
         bt.setOnAction(new EventHandler<ActionEvent>() 
         {
             @Override
             public void handle(ActionEvent arg0)
             {
-                System.out.println("HelloWorld! :)");
+                System.out.println("HelloWorld!2 :)");
             }
         });
         

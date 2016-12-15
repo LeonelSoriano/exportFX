@@ -9,19 +9,37 @@
   <url>http://maven.apache.org</url>
   <dependencies>
     
-    <dependency>
+    	<dependency>
 		<groupId>junit</groupId>
 		<artifactId>junit</artifactId>
 		<version>4.12</version>
 		<scope>test</scope>
 	</dependency>
+	<dependency>
+    		<groupId>org.jdbi</groupId>
+    		<artifactId>jdbi</artifactId>
+    		<version>2.77</version>
+	</dependency>
+	
+	<dependency>
+	    <groupId>org.xerial</groupId>
+	    <artifactId>sqlite-jdbc</artifactId>
+	    <version>3.15.1</version>
+    </dependency>
+    
+    <dependency>
+	    <groupId>org.json</groupId>
+	    <artifactId>json</artifactId>
+	    <version>20160810</version>
+   </dependency>
+	
 	
     <dependency>
   <groupId>com.oracle</groupId>
   <artifactId>javafx</artifactId>
   <version>2.2.3</version>
   <scope>system</scope>
-  <systemPath>/usr/java/jdk1.8.0_112/jre/lib/ext/jfxrt.jar</systemPath>
+  <systemPath>/usr/java/jdk1.8.0_111/jre/lib/ext/jfxrt.jar</systemPath>
 </dependency>
     
   </dependencies>

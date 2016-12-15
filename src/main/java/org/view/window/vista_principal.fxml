@@ -8,12 +8,12 @@
 
 <TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="200.0" prefHeight="400.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
   <tabs>
-    <Tab closable="false" text="EXE">
+    <Tab id="tab_exe" closable="false" text="EXE">
       <content>
         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
       </content>
     </Tab>
-    <Tab closable="false" text="Configuracion DB">
+    <Tab id="tab_config_db" closable="false" text="Configuracion DB">
       <content>
         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                <children>
@@ -40,7 +40,7 @@
                                     <Font size="14.0" />
                                  </font>
                               </Label>
-                              <TextField prefHeight="25.0" prefWidth="250.0">
+                              <TextField id="input_url" fx:id="input_url" prefHeight="25.0" prefWidth="250.0">
                                  <font>
                                     <Font size="14.0" />
                                  </font>
@@ -56,7 +56,7 @@
                                     <Font size="14.0" />
                                  </font>
                               </Label>
-                              <TextField prefHeight="25.0" prefWidth="84.0">
+                              <TextField fx:id="input_port" prefHeight="25.0" prefWidth="84.0">
                                  <HBox.margin>
                                     <Insets left="10.0" top="15.0" />
                                  </HBox.margin>
@@ -76,7 +76,7 @@
                                     <Font size="14.0" />
                                  </font>
                               </Label>
-                              <TextField prefWidth="250.0">
+                              <TextField fx:id="input_db" prefWidth="250.0">
                                  <HBox.margin>
                                     <Insets left="9.0" top="15.0" />
                                  </HBox.margin>
@@ -96,11 +96,11 @@
                                     <Font size="15.0" />
                                  </font>
                               </Label>
-                              <TextField prefWidth="250.0">
+                              <PasswordField fx:id="input_password" prefWidth="250.0">
                                  <HBox.margin>
-                                    <Insets left="13.0" top="15.0" />
+                                    <Insets left="9.0" top="15.0" />
                                  </HBox.margin>
-                              </TextField>
+                              </PasswordField>
                            </children>
                         </HBox>
                         <HBox prefHeight="40.0">
@@ -116,7 +116,7 @@
                                     <Insets left="65.0" top="20.0" />
                                  </HBox.margin>
                               </Label>
-                              <ComboBox prefWidth="250.0">
+                              <ComboBox fx:id="input_driver" prefWidth="250.0">
                                  <HBox.margin>
                                     <Insets left="10.0" top="15.0" />
                                  </HBox.margin>
@@ -129,7 +129,7 @@
                            </VBox.margin>
                            <children>
                               <Separator prefHeight="3.0" prefWidth="135.0" />
-                              <Label prefWidth="260.0" text="Label">
+                              <Label fx:id="label_msg" prefWidth="260.0" text="Label">
                                  <HBox.margin>
                                     <Insets top="20.0" />
                                  </HBox.margin>
@@ -137,12 +137,12 @@
                                     <Font name="System Bold Italic" size="15.0" />
                                  </font>
                               </Label>
-                              <ProgressIndicator disable="true" prefHeight="17.0" prefWidth="26.0">
+                              <ProgressIndicator fx:id="loader" disable="true" prefHeight="17.0" prefWidth="26.0">
                                  <HBox.margin>
                                     <Insets left="10.0" />
                                  </HBox.margin>
                               </ProgressIndicator>
-                              <Button mnemonicParsing="false" text="Probar conexcion">
+                              <Button fx:id="btn_test_conect" mnemonicParsing="false" text="Probar conexcion">
                                  <HBox.margin>
                                     <Insets left="10.0" top="10.0" />
                                  </HBox.margin>
@@ -155,7 +155,7 @@
                            </VBox.margin>
                            <children>
                               <Separator prefHeight="6.0" prefWidth="135.0" />
-                              <Button mnemonicParsing="false" text="Guardar">
+                              <Button fx:id="btn_save" mnemonicParsing="false" text="Guardar">
                                  <HBox.margin>
                                     <Insets left="10.0" top="10.0" />
                                  </HBox.margin>
