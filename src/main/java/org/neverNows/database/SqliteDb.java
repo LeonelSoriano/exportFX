@@ -3,34 +3,30 @@ package org.neverNows.database;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.json.JSONObject;
+import java.util.StringTokenizer;
 
+import org.json.JSONObject;
+import org.neverNows.database.beans.FKMapper;
 import org.neverNows.database.beans.StructureItemTable;
 import org.neverNows.database.beans.StructureTable;
+import org.neverNows.param.CommonString;
 import org.neverNows.param.DriverList;
+import org.neverNows.until.ComandTerminal;
+import org.neverNows.until.FileUntil;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.Query;
 
 public class SqliteDb extends FatherDatabase{
-	
-	
 
 	
-	
-	public SqliteDb(){
-		super(DriverList.sqlite,
-				"/home/leonel/exportFX/src/test/db/export.db");
-		
-		fillAllSql();
-	}
-	
+
 	public SqliteDb(String database){
 		
 		super(DriverList.sqlite,
-			 database);
+				CommonString.PATH_BASE + database);
 		
-		fillAllSql();
+		fillAllSql();	
 	}
 	
 	@Override
@@ -159,8 +155,6 @@ public class SqliteDb extends FatherDatabase{
 
 	@Override
 	public boolean tableIsParam(String nameTable) {
-		
-		
 		int count = 0;
 		
     	Handle handle = null;
@@ -192,9 +186,7 @@ public class SqliteDb extends FatherDatabase{
 	@Override
 	public String valuesFormTableSimple(String nameTable) {
 		JSONObject obj = new JSONObject();
-	 
 		List<JSONObject> data  = new ArrayList<>();
-		
 
     	Handle handle = null;
     	DBI dbi = new DBI(getDriverString());
@@ -230,9 +222,97 @@ public class SqliteDb extends FatherDatabase{
     
 	    obj.put("table", nameTable);
 	    obj.put("data", data);
-
 	    
 	    return obj.toString();
+	}
+	
+	
+
+	@Override
+	public void createDatabeFromFile( String file) {
+		ComandTerminal comandTerminal = new ComandTerminal();
+		FileUntil fileUntil = new FileUntil();
+		
+		comandTerminal.executeCommand("rm "  + this.database);
+		
+	   	Handle handle = null;
+    	DBI dbi = new DBI(getDriverString());
+    	
+    	String sql = fileUntil.cleanDump(fileUntil.txtToString(CommonString.PATH_BASE + file));
+    	
+    	StringTokenizer stringTokenizer = new StringTokenizer(sql, ";");
+    	
+    	 while (stringTokenizer.hasMoreTokens()) { 
+    		 
+    	    	try {
+    	            handle = dbi.open();
+    	            handle.execute(stringTokenizer.nextToken());
+    	            
+    	        }catch (Exception e) {
+    	        	System.err.println(e.getMessage());	
+    			}
+    	    	finally {
+    	            if (handle != null) {
+    	                handle.close();
+    	            }
+    	        }
+    			
+    	 }//end elihw
+	  
+
+	}
+
+	@Override
+	public List<String> getOrderTableByDump(String file) {
+
+		List<String> tables = new ArrayList<>();
+		
+		String tokenSearch = "CREATE TABLE";
+		
+		FileUntil fileUntil = new FileUntil();
+		StringBuilder dumpSql = new StringBuilder(
+				fileUntil.txtToString(CommonString.PATH_BASE + file));
+		
+		for (int i = -1; (i = dumpSql.indexOf(tokenSearch, i + 1)) != -1; ) {
+		    StringBuilder tableTmp = new StringBuilder();
+		    
+		   i += tokenSearch.length();
+		   
+		   boolean isFound = false;
+		   boolean activateSearch = false;
+		  
+		   while ( !isFound || i > dumpSql.length()) {
+
+			   if(dumpSql.charAt(i) != ' ' ){
+				   activateSearch = true;
+			   }
+			   
+			   if(activateSearch){
+				   if(dumpSql.charAt(i) == ' '){
+					   isFound = true;
+				   }else{
+					   tableTmp.append(dumpSql.charAt(i));
+				   }
+				   
+			   } 
+			   i++;  
+		   }
+		   
+		   tables.add(tableTmp.toString().replace(" ", "")
+				   .replace("\"", "")
+				   .replace("'", "")
+				   .replace("`", ""));
+
+		}
+		
+		return tables;
+	}
+
+
+	@Override
+	public List<FKMapper> getMapperFKInTable(String nameTable){
+		return null;
+
 	}
 
 

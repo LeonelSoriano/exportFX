@@ -1,4 +1,4 @@
-package org.neverNows.database;
+package org.neverNows.databaseTest;
 
 import static org.junit.Assert.*;
 
@@ -8,6 +8,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
+import org.neverNows.database.SqliteDb;
 import org.neverNows.database.beans.StructureTable;
 
 public class SqliteDbTest {
@@ -17,8 +18,19 @@ public class SqliteDbTest {
 	
 	@Before
 	public void init(){
-		sqliteDb = new SqliteDb();
+		sqliteDb = new SqliteDb("test/db/ejemplo.db");
 	}
+	
+	@Test
+	public void createDatabeFromFileTest(){
+		 SqliteDb sqliteDbDatabeFromFile = new SqliteDb("test/db/ejemploDatabeFromFile.db");;
+		sqliteDbDatabeFromFile.createDatabeFromFile( "test/db/export.sql");
+		
+		assertEquals(sqliteDbDatabeFromFile.tableIsParam("persona"), true);
+		assertEquals(sqliteDbDatabeFromFile.getStructureTables().size() , 4);
+	}
+
+	
 
 	@Test
 	public void testGetAllTables() {
@@ -49,6 +61,8 @@ public class SqliteDbTest {
 	@Test
 	public void getStructureTableTest(){
 		StructureTable structureTable = this.sqliteDb.getStructureTable("persona");
+		
+System.out.println(this.sqliteDb.getStructureTable("persona").getItemTables().toString());
 		
 		assertEquals(structureTable.getNameTable(), "persona");
 		
@@ -91,10 +105,23 @@ public class SqliteDbTest {
 		JSONArray jsonArray = obj.getJSONArray("data");
 		
 		JSONObject dataObj = (JSONObject) jsonArray.get(0);
-		
+
 		assertEquals(" name no es igual", dataObj.getString("name"), "leonel");
 		assertEquals(" id no es igual ", dataObj.getInt("id"), 1);
-
 	}
+	
+	@Test
+	public void getOrderTableByDumpTest(){
+		
+		List<String> tablesOrder = this.sqliteDb.getOrderTableByDump(
+				"test/db/export.sql");
+		
+		assertEquals(tablesOrder.get(0), "trabajo");
+		assertEquals(tablesOrder.get(1), "persona");
+		assertEquals(tablesOrder.get(2), "no_parametro");
+		assertEquals(tablesOrder.get(3), "ejemplo");
+		
+	}
+	
 
 }

@@ -6,8 +6,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 import java.util.Map;
 
-import javax.sql.DataSource;
-
 
 import org.junit.Test;
 import org.skife.jdbi.v2.Handle;

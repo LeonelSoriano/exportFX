@@ -1,5 +1,6 @@
 package org.neverNows.database.beans;
 
+import org.neverNows.database.beans.StructureItemTable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +41,8 @@ public class StructureTable {
 	public void setParamTable(boolean paramTable) {
 		this.paramTable = paramTable;
 	}
+	
+
 	
 	
 
