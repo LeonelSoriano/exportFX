@@ -96,7 +96,7 @@ abstract class FatherDatabase {
 	 * @param nameTable nombre de la tabla
 	 * @return {@link List<FKMapper>} array list que tiene todos los mapeos de fk
 	 */
-	public abstract List<FKMapper> getMapperFKInTable(String nameTable);
+	public abstract List<FKMapper> getMapperFKInTable( String nameTable);
 
 	/**
 	 * @author leonelsoriano3@gmail.com

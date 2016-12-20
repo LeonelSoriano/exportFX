@@ -21,6 +21,8 @@ public class SqliteDb extends FatherDatabase{
 
 	
 
+	private String sqlDumpTable;
+	
 	public SqliteDb(String database){
 		
 		super(DriverList.sqlite,
@@ -39,6 +41,9 @@ public class SqliteDb extends FatherDatabase{
 		this.sqlCountTable = "select count(*) as total from <<nameTable>>;";
 		
 		this.sqlSelectAll = "select * from <<nameTable>>;";
+		
+		this.sqlDumpTable = "SELECT sql FROM sqlite_master WHERE type='table' "
+				+ "AND name = '<<nameTable>>';";
 	} 
 	
 	
@@ -307,12 +312,196 @@ public class SqliteDb extends FatherDatabase{
 		
 		return tables;
 	}
+	
+	
+	/**
+	 * @author leonelsoriano3@gmail.com
+	 * @param tableName nombre de la tabla
+	 * @return sql create de la tabla que se pidio
+	 */
+	private String getSqlCreateFormTable(String nameTable){
+			
+		StringBuilder sqlStr = new StringBuilder();
+		
+    	Handle handle = null;
+    	DBI dbi = new DBI(getDriverString());
+		
+    	try {
 
+    		String sql = this.sqlDumpTable.replaceAll("<<nameTable>>", nameTable);
+            handle = dbi.open();
+            Query<Map<String, Object>> q = handle.createQuery(sql);
+            List<Map<String, Object>> l = q.list();
+
+            for (Map<String, Object> m : l) {
+            	sqlStr.append((String) m.get("sql"));
+            }
+
+        }catch (Exception e) {
+        	System.err.println(e.getMessage());
+        	return null;
+		}
+    	finally {
+            if (handle != null) {
+                handle.close();
+            }
+        }
+
+		return sqlStr.toString();
+	}
 
 	@Override
-	public List<FKMapper> getMapperFKInTable(String nameTable){
-		return null;
+	public List<FKMapper> getMapperFKInTable(final String nameTable) {
 
+		final String tokenSearch = "FOREIGN KEY";
+		final String tokenReference = "REFERENCES";
+		
+		List<FKMapper> fkMappers = new ArrayList<>();
+		
+		StringBuilder dumpSql = new StringBuilder(
+				this.getSqlCreateFormTable(nameTable).toUpperCase());
+		
+		
+
+		for (int i = -1; (i = dumpSql.indexOf(tokenSearch, i + 1)) != -1; ) {
+			
+			FKMapper fkMapper = new FKMapper();
+			fkMapper.setNameTable(nameTable);
+			
+			i += tokenSearch.length();
+			
+			
+			boolean referenceSearchMode = false;
+			boolean referenceSearchModeForeinTable = false;
+			boolean isFound = false;
+			boolean activateSearch = false;
+			boolean searchTableReference = true;
+			boolean searchTableReferenceActivate = false;
+			boolean searchValueReferenceActivate = false;
+			
+
+			StringBuilder refTableForeinValue = new StringBuilder(); 
+			StringBuilder refValueForeinValue = new StringBuilder();
+			StringBuilder refTableValue = new StringBuilder(); 
+			StringBuilder tmpValueReferenceSearch = new StringBuilder();
+			StringBuilder refSearch = new StringBuilder();
+			
+			
+			while ( !isFound && i < dumpSql.length()) {
+
+				if(!referenceSearchMode){
+					
+					if(dumpSql.charAt(i) != ' ' ){
+						activateSearch = true;
+					}
+					
+					if(activateSearch){
+						
+						refSearch.append(dumpSql.charAt(i));
+						if(dumpSql.charAt(i) == ')'){
+							refTableValue.append(refSearch.toString());
+							
+							referenceSearchMode = true;
+							activateSearch = false;
+						}
+					}
+
+				}else if(referenceSearchMode){
+					
+					if(!referenceSearchModeForeinTable){
+						if(dumpSql.charAt(i) != ' ' ){
+							activateSearch = true;
+						}else{
+							activateSearch = false;
+							tmpValueReferenceSearch.delete(0, refTableValue.length());
+						}
+						
+					}else{
+						//buscando en la parte de la tabla
+						if(searchTableReference){
+							if(dumpSql.charAt(i) != ' ' ){
+								searchTableReferenceActivate = true;
+							}else{
+								searchTableReferenceActivate = false;
+							}
+							
+							if(searchTableReferenceActivate){
+								
+								if(dumpSql.charAt(i) != '('){
+									refTableForeinValue.append(dumpSql.charAt(i));
+								}else{
+									searchTableReference = false;
+								}
+							}
+							
+						}else{
+							//buscando en la parte del valor referencia
+							if(dumpSql.charAt(i) != ' ' ){
+								searchValueReferenceActivate = true;
+							}else{
+								searchValueReferenceActivate = false;
+							}
+							
+							
+							if(searchValueReferenceActivate){
+								
+								if(dumpSql.charAt(i) != ')'){
+									refValueForeinValue.append(dumpSql.charAt(i));
+								}else{
+									searchTableReference = false;
+									isFound = true;
+								}
+							}
+							
+							
+						}
+
+					}
+
+
+					if(activateSearch){
+
+						tmpValueReferenceSearch.append(dumpSql.charAt(i));
+
+						if(tmpValueReferenceSearch.toString().
+								toUpperCase().equals(tokenReference)){
+							referenceSearchModeForeinTable = true;		
+							tmpValueReferenceSearch.delete(0, refTableValue.length());
+						}
+					}
+						
+				}
+				
+				i++;
+			}
+			
+			
+			fkMapper.setNameTableRef(refTableForeinValue.toString().replace(" ", "")
+					.replace("\"", "")
+					.replace("'", "")
+				 	.replace("`", "")
+				 	.replace("(", "")
+				 	.replace(")", ""));
+			
+			fkMapper.setNamecolumnRef(refValueForeinValue.toString().replace(" ", "")
+					.replace("\"", "")
+					.replace("'", "")
+				 	.replace("`", "")
+				 	.replace("(", "")
+				 	.replace(")", ""));
+			
+			fkMapper.setNamecolumn(refTableValue.toString().replace(" ", "")
+					.replace("\"", "")
+					.replace("'", "")
+				 	.replace("`", "")
+				 	.replace("(", "")
+				 	.replace(")", ""));
+			
+			fkMappers.add(fkMapper);
+			
+		}
+		
+		return fkMappers;
 	}
 
 

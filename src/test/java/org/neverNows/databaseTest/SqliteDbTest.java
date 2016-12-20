@@ -2,6 +2,8 @@ package org.neverNows.databaseTest;
 
 import static org.junit.Assert.*;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -9,7 +11,9 @@ import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.neverNows.database.SqliteDb;
+import org.neverNows.database.beans.FKMapper;
 import org.neverNows.database.beans.StructureTable;
+
 
 public class SqliteDbTest {
 	
@@ -62,7 +66,6 @@ public class SqliteDbTest {
 	public void getStructureTableTest(){
 		StructureTable structureTable = this.sqliteDb.getStructureTable("persona");
 		
-System.out.println(this.sqliteDb.getStructureTable("persona").getItemTables().toString());
 		
 		assertEquals(structureTable.getNameTable(), "persona");
 		
@@ -119,9 +122,51 @@ System.out.println(this.sqliteDb.getStructureTable("persona").getItemTables().to
 		assertEquals(tablesOrder.get(0), "trabajo");
 		assertEquals(tablesOrder.get(1), "persona");
 		assertEquals(tablesOrder.get(2), "no_parametro");
-		assertEquals(tablesOrder.get(3), "ejemplo");
-		
+		assertEquals(tablesOrder.get(3), "ejemplo");	
 	}
 	
+	@Test
+	public void getSqlCreateFormTableTest(){
+		Class<? extends SqliteDb> classReflextion = this.sqliteDb.getClass();
+		
+		String returnForTable = "CREATE TABLE 'persona' (	`id`	"
+				+ "INTEGER PRIMARY KEY AUTOINCREMENT,	`nombre`	NUMERIC"
+				+ " NOT NULL,	`alias`	TEXT,	`cedula`	NUMERIC UNIQUE,	"
+				+ "`fk_trabajo`	INTEGER NOT NULL,	FOREIGN KEY(`fk_trabajo`) "
+				+ "REFERENCES `trabajo`(`id`))";
+		
+	     try {          
+	        Method method = classReflextion.getDeclaredMethod(
+	        		"getSqlCreateFormTable", new Class[]{String.class});
+	        method.setAccessible(true);
+
+			assertEquals((String)method.invoke(this.sqliteDb, "persona"), returnForTable);
+			
+	     }
+	     catch(IllegalAccessException | IllegalArgumentException  
+	    		 | InvocationTargetException |NoSuchMethodException e) {
+	        e.printStackTrace();
+	        fail();
+	     }
+	   
+	}
+	
+	
+	@Test
+	public void getMapperFKInTableTest(){
+		List<FKMapper> fKMappers = this.sqliteDb.getMapperFKInTable(
+				 "ejemplo");
+		assertEquals(fKMappers.size(), 0);
+		
+		fKMappers = this.sqliteDb.getMapperFKInTable( "persona");
+		
+		assertEquals(fKMappers.size(), 1);
+		
+		assertEquals(fKMappers.get(0).getNamecolumnRef(), "ID");
+		
+		assertEquals(fKMappers.get(0).getNameTableRef(), "TRABAJO");
+		
+	}
+
 
 }
