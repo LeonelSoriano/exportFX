@@ -1,14 +1,19 @@
 package org.neverNows.database;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
+import org.neverNows.SqlJsonNoEqualParamException;
 import org.neverNows.database.beans.FKMapper;
 import org.neverNows.database.beans.StructureItemTable;
 import org.neverNows.database.beans.StructureTable;
+import org.neverNows.enumeration.SqliteTypeEnum;
 import org.neverNows.param.CommonString;
 import org.neverNows.param.DriverList;
 import org.neverNows.until.ComandTerminal;
@@ -20,7 +25,6 @@ import org.skife.jdbi.v2.Query;
 public class SqliteDb extends FatherDatabase{
 
 	
-
 	private String sqlDumpTable;
 	
 	public SqliteDb(String database){
@@ -44,6 +48,8 @@ public class SqliteDb extends FatherDatabase{
 		
 		this.sqlDumpTable = "SELECT sql FROM sqlite_master WHERE type='table' "
 				+ "AND name = '<<nameTable>>';";
+		
+		this.sqlTruncate = "DELETE FROM <<nameTable>>;";
 	} 
 	
 	
@@ -55,7 +61,7 @@ public class SqliteDb extends FatherDatabase{
 		
     	Handle handle = null;
     	DBI dbi = new DBI(getDriverString());
-    	//
+    	
     	try {
 
     		String sql = this.sqlGetAllTables;
@@ -107,11 +113,15 @@ public class SqliteDb extends FatherDatabase{
             Query<Map<String, Object>> q = handle.createQuery(sql);
             List<Map<String, Object>> l = q.list();
 
+            if(l.size() == 0){
+            	return null;
+            }
+            
             for (Map<String, Object> m : l) {
             	
             	StructureItemTable itemTable = new StructureItemTable();
             	
-            	itemTable.setId((int) m.get("cid"));
+            	itemTable.setId((int) m.get("pk"));
             	itemTable.setName( m.get("name").toString());
             	itemTable.setNotNull( 
             			(((Integer) m.get("notnull")).intValue() == 1) ? true : false );
@@ -123,6 +133,8 @@ public class SqliteDb extends FatherDatabase{
             			(((Integer) m.get("pk")).intValue() == 1) ? true : false );
             	
             	itemTable.setType(m.get("type").toString());
+            	
+            	itemTable.setOrder((int)m.get("cid"));
             	
             	structureTable.addItemTable(itemTable);
             }
@@ -231,7 +243,6 @@ public class SqliteDb extends FatherDatabase{
 	    return obj.toString();
 	}
 	
-	
 
 	@Override
 	public void createDatabeFromFile( String file) {
@@ -327,6 +338,7 @@ public class SqliteDb extends FatherDatabase{
     	DBI dbi = new DBI(getDriverString());
 		
     	try {
+    		
 
     		String sql = this.sqlDumpTable.replaceAll("<<nameTable>>", nameTable);
             handle = dbi.open();
@@ -504,6 +516,188 @@ public class SqliteDb extends FatherDatabase{
 		return fkMappers;
 	}
 
+	@Override
+	public void insertData(String jsonTable) throws SqlJsonNoEqualParamException {
+		
+		//tiene el sql de salida del insert
+		StringBuilder builder = new StringBuilder("INSERT INTO ");
+		JSONObject jsonObject = new JSONObject(jsonTable);
+		
+		builder.append(jsonObject.getString("table").toUpperCase());
+		
+		//datos a insertar en la tabla
+		JSONArray jsonData = jsonObject.getJSONArray("data");
+		
+		StructureTable structureTable = 
+				this.getStructureTable(jsonObject.getString("table").toUpperCase());
+		
+		List<String> valuesInsertFromJson = new ArrayList<>();
+		
+		/*
+		 * en esta parte voy a validar el objeto con alguna pequeña logica
+		 */
+		JSONObject jsonIterate = (JSONObject) jsonData.get(0);
+		
+		Iterator<String> iter = jsonIterate.keys();
+		int maxValueJson = 0;
+		
+		//TODO: agregar la excecion cuando se repitan las colummnas del json
+		while (iter.hasNext()) {
+			maxValueJson++;
+			String key = iter.next();
+			valuesInsertFromJson.add(key);
+			
+			if(!structureTable.existInEstrucute(key))
+			{
+				throw new SqlJsonNoEqualParamException();
+			}			
+		}
+		
+		if(maxValueJson != structureTable.getItemTables().size() ){
+			throw new SqlJsonNoEqualParamException();
+		}
+		
+		boolean isOnlyColumn = true;
+		builder.append(" (");
+		for(String column : valuesInsertFromJson){
+			if(isOnlyColumn){
+				isOnlyColumn = false;
+			}else{
+				builder.append(",");
+			}
+			builder.append(" ").append(column);
+		}
+		builder.append(") ");
+
+		builder.append(" VALUES ");
+		boolean isFirstValues = true;
+		for(int i = 0; i < jsonData.length() ; i++){
+			
+			if(isFirstValues){
+				isFirstValues = false;
+			}else{
+				builder.append(",");
+			}
+			
+			builder.append(" (");
+			
+			JSONObject tmpJson = (JSONObject) jsonData.get(i);
+			Iterator<String> iterTmp = tmpJson.keys();
+			
+			//reutilizo esta variable lo uqe hace es sabver si es el primero para
+			// colocar coma o no
+			isOnlyColumn = true;
+			while (iterTmp.hasNext()) {
+				
+				if(isOnlyColumn){
+					isOnlyColumn = false;
+				}else{
+					builder.append(",");
+				}
+				
+				String key = iterTmp.next();
+				StructureItemTable itemTableTmp = 
+						structureTable.getItemTableByName(key);
+				
+				if(itemTableTmp == null){
+					throw new SqlJsonNoEqualParamException();
+				}
+				
+				try {
+			        Object value = tmpJson.get(key);
+			        
+			        if(itemTableTmp.getType().equals(SqliteTypeEnum.BLOB.name()) ||
+			        		itemTableTmp.getType().equals(SqliteTypeEnum.TEXT.name()) ){
+			        	builder.append("'" + value + "'");
+			        	
+			        }else{
+			        	builder.append(value);
+			        }
+			        
+			        
+			    } catch (JSONException e) {
+			        
+			    }
+				
+			}
+			
+
+			builder.append(") ");
+		}
+		builder.append(";");
+		
+		//TODO: guardar en base de datos probar si el inser multiple sirve
+		// si no cambiarlo a varios insert
+		
+    	Handle handle = null;
+    	DBI dbi = new DBI(getDriverString());
+        
+        try {
+            handle = dbi.open();
+            handle.execute(builder.toString());
+            
+        }catch (Exception e) {
+        	System.err.println(e.getMessage());	
+		}
+    	finally {
+            if (handle != null) {
+                handle.close();
+            }
+        }
+        
+	}
+
+	@Override
+	public Integer countTable(String nameTable) {
+		
+    	Handle handle = null;
+    	DBI dbi = new DBI(getDriverString());
+    	
+    	try {
+
+    		String sql = this.sqlCountTable.replaceAll("<<nameTable>>", nameTable);
+            handle = dbi.open();
+            Query<Map<String, Object>> q = handle.createQuery(sql);
+            List<Map<String, Object>> l = q.list();
+
+            for (Map<String, Object> m : l) {
+            	return (Integer)m.get("total");
+            }
+
+        }catch (Exception e) {
+        	System.err.println(e.getMessage());
+        	return null;
+		}
+    	finally {
+            if (handle != null) {
+                handle.close();
+            }
+        }
+    	
+		return null;
+	}
+
+	
+	@Override
+	public void cleanTable(String nameTable) {
+    	
+		Handle handle = null;
+    	DBI dbi = new DBI(getDriverString());
+        
+        try {
+            handle = dbi.open();
+            handle.execute(this.sqlTruncate.replace("<<nameTable>>",nameTable));
+            
+        }catch (Exception e) {
+        	System.err.println(e.getMessage());	
+		}
+    	finally {
+            if (handle != null) {
+                handle.close();
+            }
+        }
+		
+	}
 
 	
 

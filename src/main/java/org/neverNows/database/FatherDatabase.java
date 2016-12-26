@@ -2,6 +2,7 @@ package org.neverNows.database;
 
 import java.util.List;
 
+import org.neverNows.SqlJsonNoEqualParamException;
 import org.neverNows.database.beans.FKMapper;
 import org.neverNows.database.beans.StructureTable;
 
@@ -16,6 +17,7 @@ abstract class FatherDatabase {
 	protected String sqlGetStructureTable;
 	protected String sqlCountTable;
 	protected String sqlSelectAll;
+	protected String sqlTruncate;
 	
 	public FatherDatabase(String driver, String database){
 		this.driver = driver;
@@ -38,7 +40,8 @@ abstract class FatherDatabase {
 	
 	/**
 	 * @author leonelsoriano3@gmail.com
-	 * consigue la structura de una tabla en concreto
+	 * consigue la structura de una tabla en concreto si no existe en 
+	 * la base de datos devuelve null
 	 * @param nameTable nombre de la tabla a verificar
 	 * @return regresa un bean que mapea la structura
 	 */
@@ -97,6 +100,34 @@ abstract class FatherDatabase {
 	 * @return {@link List<FKMapper>} array list que tiene todos los mapeos de fk
 	 */
 	public abstract List<FKMapper> getMapperFKInTable( String nameTable);
+	
+	
+	/**
+	 * @author leonelsoriano3@gmail.com
+	 * inserta valores desde un json 
+	 * @param jsonTable json de datos ejemplo { "table" : "nombre tabla" , values :
+	 * [{value1 : null : value2 : "ejemplo"}  ] }
+	 * @throws SqlJsonNoEqualParamException si los parametros del json no son iguales a los
+	 * 		      de su tabla en la base de datos
+	 */
+	public abstract void insertData(String jsonTable) throws SqlJsonNoEqualParamException;
+	
+	
+	/**
+	 * @author leonelsoriano3@gmail.com
+	 * cuenta la cantidad de itenes en una tabla
+	 * @param tabla que se contara
+	 * @return el numero de itenes totales en la tabla
+	 */
+	public abstract Integer countTable(String nameTable);
+	
+	
+	/**
+	 * limpia todos los registro de  una tabla
+	 * @param nameTable nombre de la tabla a limpiar
+	 */
+	public abstract void cleanTable(String nameTable);
+	
 
 	/**
 	 * @author leonelsoriano3@gmail.com

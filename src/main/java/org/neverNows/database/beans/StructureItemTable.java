@@ -2,6 +2,8 @@ package org.neverNows.database.beans;
 
 public class StructureItemTable {
 	
+	private int order;
+	
 	private int id;
 	
 	private String name;
@@ -74,10 +76,19 @@ public class StructureItemTable {
 		this.type = type;
 	}
 
+	
+	public int getOrder() {
+		return order;
+	}
+
+	public void setOrder(int order) {
+		this.order = order;
+	}
+
 	@Override
 	public String toString() {
 		return "StructureItemTable [id=" + id + ", name=" + name + ", type=" + type + ", notNull=" + notNull
-				+ ", defaulValue=" + defaulValue + ", isFk=" + isFk + "]";
+				+ ", defaulValue=" + defaulValue + ", isFk=" + isFk + ", order= "+ order +"]";
 	}
 
 	@Override
@@ -89,6 +100,7 @@ public class StructureItemTable {
 		result = prime * result + (isFk ? 1231 : 1237);
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result + (notNull ? 1231 : 1237);
+		result = prime * result + order;
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;
 	}
@@ -118,6 +130,8 @@ public class StructureItemTable {
 			return false;
 		if (notNull != other.notNull)
 			return false;
+		if (order != other.order)
+			return false;
 		if (type == null) {
 			if (other.type != null)
 				return false;
@@ -125,6 +139,7 @@ public class StructureItemTable {
 			return false;
 		return true;
 	}
+
 
 	
 	

@@ -10,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
+import org.neverNows.SqlJsonNoEqualParamException;
 import org.neverNows.database.SqliteDb;
 import org.neverNows.database.beans.FKMapper;
 import org.neverNows.database.beans.StructureTable;
@@ -66,10 +67,11 @@ public class SqliteDbTest {
 	public void getStructureTableTest(){
 		StructureTable structureTable = this.sqliteDb.getStructureTable("persona");
 		
-		
 		assertEquals(structureTable.getNameTable(), "persona");
 		
-		assertEquals(structureTable.getItemTables().get(0).getId(), 0);
+		assertEquals(structureTable.getItemTables().get(0).getId(), 1);
+		
+		assertEquals(structureTable.getItemTables().get(0).getOrder(), 0);
 		
 		assertEquals(structureTable.getItemTables().get(0).isFk(), true);
 		
@@ -80,7 +82,16 @@ public class SqliteDbTest {
 		
 		assertEquals(structureTable.getItemTables().get(3).isNotNull(), false);
 		
+		assertEquals(structureTable.getItemTables().get(3).getOrder(), 3);
+		
+		assertEquals(structureTable.getItemTables().get(3).getId(), 0);
+		
 		assertEquals(structureTable.getItemTables().get(4).getDefaulValue(), null);
+		
+		
+		structureTable = this.sqliteDb.getStructureTable("fake_table");
+		
+		assertNull(structureTable);
 		
 	}
 	
@@ -166,6 +177,49 @@ public class SqliteDbTest {
 		
 		assertEquals(fKMappers.get(0).getNameTableRef(), "TRABAJO");
 		
+	}
+	
+	
+	/**
+	 * este hace prueba el lipiar tabla contar e insertar es el test para los tres
+	 * countTable insertData
+	 */
+	@Test 
+	public void insertDataTest(){
+		
+		Integer preValue = this.sqliteDb.countTable("no_parametro");
+		
+		assertEquals(preValue, new Integer(0));
+		
+		try {
+			this.sqliteDb.insertData(
+					" {\"table\": \"no_parametro\", "
+					+ " \"data\":[ {\"id\" : 1 , \"name\": \"ejemplo\"},{\"id\" : 2 , \"name\": \"ejemplo2\"}]}");
+		} catch (SqlJsonNoEqualParamException e) {
+			
+			fail();
+			e.printStackTrace();
+		}
+		
+		Integer postValue = this.sqliteDb.countTable("no_parametro");
+		
+		assertEquals(postValue, new Integer(2));
+		
+		this.sqliteDb.cleanTable("no_parametro");
+		
+		Integer cleanValue = this.sqliteDb.countTable("no_parametro");
+		
+		assertEquals(cleanValue, new Integer(0));
+	}
+	
+	
+	@Test
+	public void countTableTest(){
+		assertEquals(this.sqliteDb.countTable("ejemplo"),new Integer(1));
+		assertEquals(this.sqliteDb.countTable("no_parametro"), new Integer(0));
+		assertEquals(this.sqliteDb.countTable("persona"), new Integer(3));
+		assertEquals(this.sqliteDb.countTable("trabajo"), new Integer(5));
+		assertNull(this.sqliteDb.countTable("fake_table"));
 	}
 
 
