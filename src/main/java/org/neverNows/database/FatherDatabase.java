@@ -1,28 +1,43 @@
 package org.neverNows.database;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.neverNows.SqlJsonNoEqualParamException;
 import org.neverNows.database.beans.FKMapper;
 import org.neverNows.database.beans.StructureTable;
 
-abstract class FatherDatabase {
+public abstract class FatherDatabase {
 	
 	protected String driver;
 	
 	protected String database;
-	
 	
 	protected String sqlGetAllTables;
 	protected String sqlGetStructureTable;
 	protected String sqlCountTable;
 	protected String sqlSelectAll;
 	protected String sqlTruncate;
+	private Map<String , String> valueConfFK;
+	
+	
 	
 	public FatherDatabase(String driver, String database){
 		this.driver = driver;
 		this.database = database;
+		this.valueConfFK = new HashMap<>();
 	}
+	
+	
+	/**
+	 * genera el archivo de configuracion de la base de datos
+	 */
+	public void generateConfig(){
+		
+		
+	}
+	
 	
 	/**
 	 * @author leonelsoriano3@gmail.com
@@ -46,6 +61,14 @@ abstract class FatherDatabase {
 	 * @return regresa un bean que mapea la structura
 	 */
 	public abstract StructureTable getStructureTable(String nameTable);
+	
+	/**
+	 * consigue una {@link StructureTable} con la data que tiene cada columna en la 
+	 * base de datos
+	 * @param nameTable nombre de la tabla
+	 * @return structura de la tabla mas los datos en la base de datos
+	 */
+	public abstract StructureTable getStructureTableWithData(String nameTable);
 	
 	
 	/**
@@ -83,6 +106,15 @@ abstract class FatherDatabase {
 	
 	
 	/**
+	 * consigue el nombre de la columna que es primary key
+	 * @param tableName nombre de la tabla
+	 * @return nobre de la columna con el primary key
+	 */
+	public abstract String getNamePrimaryKey(String nameTable);
+	
+	
+	
+	/**
 	 * @author leonelsoriano3@gmail.com
 	 * consigue el order como seran verificados y guardados
 	 * desde el archivo dump, esto me ahorra hacerlo yo y 
@@ -101,6 +133,16 @@ abstract class FatherDatabase {
 	 */
 	public abstract List<FKMapper> getMapperFKInTable( String nameTable);
 	
+	
+	/**
+	 * consigue el valor especifico de la tabla asociada al fk
+	 * devuelve null si no consigue algo que concuerde con los param
+	 * 
+	 * @param nombre de la tabla
+	 * @param nombre de la columna
+	 * @return el valor de la tabla asociada al fk
+	 */
+	public abstract Object getValueFK(String nameTable, String column, Object value);
 	
 	/**
 	 * @author leonelsoriano3@gmail.com
@@ -129,6 +171,8 @@ abstract class FatherDatabase {
 	public abstract void cleanTable(String nameTable);
 	
 
+	
+
 	/**
 	 * @author leonelsoriano3@gmail.com
 	 * concatena la inforacion para obtener el string del driver
@@ -143,4 +187,14 @@ abstract class FatherDatabase {
 		return strDriver.toString();
 	}
 
+
+	
+	
+	public Map<String, String> getValueConfFK() {
+		return valueConfFK;
+	}
+
+
+
+	
 }

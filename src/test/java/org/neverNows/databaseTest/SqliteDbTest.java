@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.neverNows.SqlJsonNoEqualParamException;
 import org.neverNows.database.SqliteDb;
 import org.neverNows.database.beans.FKMapper;
+import org.neverNows.database.beans.StructureItemTable;
 import org.neverNows.database.beans.StructureTable;
 
 
@@ -28,7 +29,7 @@ public class SqliteDbTest {
 	
 	@Test
 	public void createDatabeFromFileTest(){
-		 SqliteDb sqliteDbDatabeFromFile = new SqliteDb("test/db/ejemploDatabeFromFile.db");;
+		SqliteDb sqliteDbDatabeFromFile = new SqliteDb("test/db/ejemploDatabeFromFile.db");;
 		sqliteDbDatabeFromFile.createDatabeFromFile( "test/db/export.sql");
 		
 		assertEquals(sqliteDbDatabeFromFile.tableIsParam("persona"), true);
@@ -36,7 +37,6 @@ public class SqliteDbTest {
 	}
 
 	
-
 	@Test
 	public void testGetAllTables() {
 		
@@ -77,8 +77,16 @@ public class SqliteDbTest {
 		
 		assertEquals(structureTable.getItemTables().get(1).getName(), "nombre");
 		
+		assertEquals(structureTable.getItemTables().get(1).getType().toUpperCase(),
+				"TEXT");
+		assertEquals(structureTable.getItemTables().get(1).getMaxValue(),
+				50);
+		
 		assertEquals(structureTable.getItemTables().get(2).getType().toUpperCase(),
 				"TEXT");
+		
+		assertEquals(structureTable.getItemTables().get(2).getMaxValue(),
+				-1);
 		
 		assertEquals(structureTable.getItemTables().get(3).isNotNull(), false);
 		
@@ -94,6 +102,24 @@ public class SqliteDbTest {
 		assertNull(structureTable);
 		
 	}
+	
+	
+	@Test
+	public void getStructureTableWithDataTest(){
+		StructureTable structureTable = 
+				this.sqliteDb.getStructureTableWithData("trabajo");
+		
+		assertEquals(structureTable.getNameTable(),"trabajo");
+		assertEquals(structureTable.getItemTables().get(0).getName(),"id");
+		assertEquals(structureTable.getItemTables().get(0).getDataByIndex(0),1);
+		assertEquals(structureTable.getItemTables().get(0).getDataByIndex(3),4);
+		assertEquals(structureTable.getItemTables().get(1).getName(),"nombre");
+		assertEquals(structureTable.getItemTables().get(1).getDataByIndex(0),
+				"programador");
+		assertEquals(structureTable.getItemTables().get(1).getDataByIndex(3),
+				"carpintero");
+	} 
+	
 	
 	@Test
 	public void getStructureTablesTest(){
@@ -177,6 +203,45 @@ public class SqliteDbTest {
 		
 		assertEquals(fKMappers.get(0).getNameTableRef(), "TRABAJO");
 		
+	}
+	
+	@Test
+	public void getValueFKTest(){
+		//Object object = this.sqliteDb.getValueFK("persona", "fk_trabajo",9999);
+		/*assertNull(object);
+		
+		object = this.sqliteDb.getValueFK("persona", "fk_trabajo_fake",1);
+		assertNull(object);
+		
+		object = this.sqliteDb.getValueFK("personaFake", "fk_trabajo",1);
+		assertNull(object);
+		
+		object = this.sqliteDb.getValueFK("personaFake", "fk_trabajo_Fake",9999999);
+		assertNull(object);*/
+		
+		
+		Object object = this.sqliteDb.getValueFK("persona", "fk_trabajo",1);
+		assertEquals(object, "programador");
+		
+		
+		object = this.sqliteDb.getValueFK("persona", "fk_trabajo",2);
+		assertEquals(object, "arquitecto");
+		
+		object = this.sqliteDb.getValueFK("persona", "fk_trabajo",3);
+		assertEquals(object, "plomero");
+
+		
+	}
+	
+	
+	
+	@Test
+	public void getNamePrimaryKeyTest(){
+		assertEquals(this.sqliteDb.getNamePrimaryKey("fake_table"), "id");
+		assertEquals(this.sqliteDb.getNamePrimaryKey("ejemplo"), "id");
+		assertEquals(this.sqliteDb.getNamePrimaryKey("no_parametro"), "id");
+		assertEquals(this.sqliteDb.getNamePrimaryKey("persona"), "id");
+		assertEquals(this.sqliteDb.getNamePrimaryKey("trabajo"), "id");
 	}
 	
 	

@@ -52,8 +52,6 @@ public class SqliteDb extends FatherDatabase{
 		this.sqlTruncate = "DELETE FROM <<nameTable>>;";
 	} 
 	
-	
-	
 	@Override
 	public List<String> getAllTables() {
 		
@@ -98,6 +96,7 @@ public class SqliteDb extends FatherDatabase{
 
 	@Override
 	public StructureTable getStructureTable(String nameTable) {
+
 		
 		StructureTable structureTable = new StructureTable(nameTable);
 		
@@ -132,7 +131,35 @@ public class SqliteDb extends FatherDatabase{
             	itemTable.setFk(
             			(((Integer) m.get("pk")).intValue() == 1) ? true : false );
             	
-            	itemTable.setType(m.get("type").toString());
+            	if(m.get("type").toString().contains("(")){
+            		//TEXT(50)
+            		StringBuilder maxValueStr = new StringBuilder();
+            		StringBuilder typeValueStr = new StringBuilder();
+            		boolean activateFillString = false;
+            		for(char c : m.get("type").toString().toCharArray()){
+            			if(c == ')'){
+            				break;
+            			}
+            			
+            			if(activateFillString){
+            				maxValueStr.append(c);
+            			}
+            			
+            			if(c == '('){
+            				activateFillString = true;
+            			}else if(!activateFillString){
+            				typeValueStr.append(c);
+            			}	
+            		}
+            		
+            		itemTable.setMaxValue(Integer.parseInt(maxValueStr.toString()));
+            		itemTable.setType(typeValueStr.toString());
+            		
+            	}else{
+            		itemTable.setType(m.get("type").toString());
+            		itemTable.setMaxValue(-1);
+            	}
+            	
             	
             	itemTable.setOrder((int)m.get("cid"));
             	
@@ -154,6 +181,56 @@ public class SqliteDb extends FatherDatabase{
 		return structureTable;
 	}
 
+	@Override
+	public StructureTable getStructureTableWithData(String nameTable) {
+		
+		StringBuilder sqlSelect = new StringBuilder("SELECT ");
+		
+		StructureTable structureTable = this.getStructureTable(nameTable);
+		
+		boolean isFirstValue = true;
+		for(StructureItemTable itemTable : structureTable.getItemTables() ){
+			if(isFirstValue){
+				isFirstValue = false;
+			}else{
+				sqlSelect.append(", ");
+			}
+			
+			sqlSelect.append(itemTable.getName());
+		}
+		
+		sqlSelect.append(" FROM ");
+		sqlSelect.append(structureTable.getNameTable());
+		
+	 	Handle handle = null;
+    	DBI dbi = new DBI(getDriverString());
+		
+    	try {
+    		
+            handle = dbi.open();
+            Query<Map<String, Object>> q = handle.createQuery(sqlSelect.toString());
+            List<Map<String, Object>> l = q.list();
+
+            for (Map<String, Object> m : l) {
+            	
+            	for(int i = 0; i < structureTable.getItemTables().size(); i++){
+            		structureTable.getItemTables().get(i).addDataValues(
+            				m.get(structureTable.getItemTables().get(i).getName()));
+            	}
+            }
+
+        }catch (Exception e) {
+        	System.err.println(e.getMessage());
+		}
+    	finally {
+            if (handle != null) {
+                handle.close();
+            }
+        }
+		
+		return structureTable;
+	}
+	
 	@Override
 	public List<StructureTable> getStructureTables() {
 		
@@ -322,6 +399,100 @@ public class SqliteDb extends FatherDatabase{
 		}
 		
 		return tables;
+	}
+	
+	
+	@Override
+	public Object getValueFK(String nameTable, String column, Object value){
+		
+		List<FKMapper> fkMappers = this.getMapperFKInTable(nameTable);
+		
+		
+		
+		if(fkMappers.isEmpty()){
+			return null;
+		}
+		
+		
+		FKMapper fkMapper = null;
+		
+		for(int i = 0; i < fkMappers.size() ; i++){
+			if(fkMappers.get(i).getNamecolumn().toUpperCase().equals(
+					column.toUpperCase())){
+				
+				fkMapper = fkMappers.get(i);
+				break;
+			}
+	
+		}
+		
+		
+		if(fkMapper == null){
+			return null;
+		}
+		
+    	Handle handle = null;
+    	DBI dbi = new DBI(getDriverString());
+    	
+    	
+    	StructureTable structureTable = this.getStructureTable(fkMapper.getNameTableRef());
+    	
+    	
+    	
+    	if(structureTable == null){
+    		return null;
+    	}
+    	
+    
+    	String idFk = this.getNamePrimaryKey(fkMapper.getNameTableRef());
+    	
+    	StringBuilder builder = new StringBuilder();
+    	
+    	builder.append("SELECT ");
+    	builder.append(fkMapper.getNamecolumnRef());
+    	builder.append(" as valueFK FROM ");
+    	builder.append(fkMapper.getNameTableRef());
+    	builder.append(" WHERE ");
+    	builder.append(idFk);
+    	builder.append(" = ");
+    	
+    	if(value instanceof String){
+    		builder.append("'");
+    		builder.append(value);
+    		builder.append("'");
+    	}else{
+    		builder.append(value);
+    	}
+    	
+    	
+    	
+    	//SELECT * FROM TABLE WHERE COLUMN = VALUE
+    	
+       	try {
+
+    		String sql = builder.toString();
+            handle = dbi.open();
+            Query<Map<String, Object>> q = handle.createQuery(sql);
+            List<Map<String, Object>> l = q.list();
+
+            for (Map<String, Object> m : l) {
+            	
+            	
+            	return m.get("valueFK");
+            }
+
+        }catch (Exception e) {
+        	System.err.println(e.getMessage());
+        	return null;
+		}
+    	finally {
+            if (handle != null) {
+                handle.close();
+            }
+        }
+    	
+		return null;
+    	
 	}
 	
 	
@@ -515,6 +686,24 @@ public class SqliteDb extends FatherDatabase{
 		
 		return fkMappers;
 	}
+	
+	
+	@Override
+	public String getNamePrimaryKey(String nameTable){
+		
+		StructureTable structureTable = this.getStructureTable(nameTable);
+		
+		if(structureTable == null){
+			return null;
+		}
+		
+		for(StructureItemTable itemTable : structureTable.getItemTables()){
+			if(itemTable.getId() == 1){
+				return itemTable.getName();
+			}
+		}
+		return null;
+	}
 
 	@Override
 	public void insertData(String jsonTable) throws SqlJsonNoEqualParamException {
@@ -661,6 +850,11 @@ public class SqliteDb extends FatherDatabase{
             List<Map<String, Object>> l = q.list();
 
             for (Map<String, Object> m : l) {
+            	
+            	if (handle != null) {
+                    handle.close();
+                }
+            	
             	return (Integer)m.get("total");
             }
 
@@ -698,6 +892,8 @@ public class SqliteDb extends FatherDatabase{
         }
 		
 	}
+
+
 
 	
 

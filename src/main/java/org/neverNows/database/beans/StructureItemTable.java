@@ -1,5 +1,8 @@
 package org.neverNows.database.beans;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class StructureItemTable {
 	
 	private int order;
@@ -16,7 +19,13 @@ public class StructureItemTable {
 	
 	private boolean isFk;
 	
-	public StructureItemTable(){}
+	private int maxValue;
+	
+	private List<Object> dataValues;
+	
+	public StructureItemTable(){
+		this.dataValues = new ArrayList<>();
+	}
 
 	public StructureItemTable(int id, String name, String type, boolean notNull, String defaulValue, boolean isFk) {
 		super();
@@ -26,6 +35,7 @@ public class StructureItemTable {
 		this.notNull = notNull;
 		this.defaulValue = defaulValue;
 		this.isFk = isFk;
+		this.dataValues = new ArrayList<>();
 	}
 
 	public int getId() {
@@ -76,7 +86,6 @@ public class StructureItemTable {
 		this.type = type;
 	}
 
-	
 	public int getOrder() {
 		return order;
 	}
@@ -85,63 +94,49 @@ public class StructureItemTable {
 		this.order = order;
 	}
 
-	@Override
-	public String toString() {
-		return "StructureItemTable [id=" + id + ", name=" + name + ", type=" + type + ", notNull=" + notNull
-				+ ", defaulValue=" + defaulValue + ", isFk=" + isFk + ", order= "+ order +"]";
+
+	public int getMaxValue() {
+		return maxValue;
 	}
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((defaulValue == null) ? 0 : defaulValue.hashCode());
-		result = prime * result + id;
-		result = prime * result + (isFk ? 1231 : 1237);
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + (notNull ? 1231 : 1237);
-		result = prime * result + order;
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
-		return result;
+	public void setMaxValue(int maxValue) {
+		this.maxValue = maxValue;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		StructureItemTable other = (StructureItemTable) obj;
-		if (defaulValue == null) {
-			if (other.defaulValue != null)
-				return false;
-		} else if (!defaulValue.equals(other.defaulValue))
-			return false;
-		if (id != other.id)
-			return false;
-		if (isFk != other.isFk)
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (notNull != other.notNull)
-			return false;
-		if (order != other.order)
-			return false;
-		if (type == null) {
-			if (other.type != null)
-				return false;
-		} else if (!type.equals(other.type))
-			return false;
-		return true;
+	
+	public List<Object> getDataValues() {
+		return dataValues;
 	}
-
-
+	
+	/**
+	 * consigue un valor de los datos por el index dado
+	 * @param index index que se buscar devolver si es mayor al tamaño del index
+	 * en cuestion devuelve un null o si es menor a 0
+	 * @return
+	 */
+	public Object getDataByIndex(int index){
+		if(index < 0){
+			return null;
+		}else if(this.dataValues.size() < index){
+			return null;
+		}else{
+			return this.dataValues.get(index);
+		}
+	}
+	
+	/**
+	 * agrega un valor a la variable que tiene los datos de la base de datos
+	 * @param obj el valor a ingresar
+	 */
+	public void addDataValues(Object obj){
+		this.dataValues.add(obj);
+	}
 	
 	
 
+	public void setDataValues(List<Object> dataValues) {
+		this.dataValues = dataValues;
+	}
+
+	
 }

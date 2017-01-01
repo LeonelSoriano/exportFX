@@ -10,7 +10,7 @@ INSERT INTO `trabajo` VALUES (4,'carpintero');
 INSERT INTO `trabajo` VALUES (5,'poeta');
 CREATE TABLE "persona" (
 	`id`	INTEGER PRIMARY KEY AUTOINCREMENT,
-	`nombre`	NUMERIC NOT NULL,
+	`nombre`	TEXT(50) NOT NULL,
 	`alias`	TEXT,
 	`cedula`	NUMERIC UNIQUE,
 	`fk_trabajo`	INTEGER NOT NULL,
