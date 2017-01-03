@@ -2,12 +2,14 @@ package org.neverNows.databaseTest;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.neverNows.SqlJsonNoEqualParamException;
@@ -15,6 +17,7 @@ import org.neverNows.database.SqliteDb;
 import org.neverNows.database.beans.FKMapper;
 import org.neverNows.database.beans.StructureItemTable;
 import org.neverNows.database.beans.StructureTable;
+import org.neverNows.param.CommonString;
 
 
 public class SqliteDbTest {
@@ -26,6 +29,15 @@ public class SqliteDbTest {
 	public void init(){
 		sqliteDb = new SqliteDb("test/db/ejemplo.db");
 	}
+	
+	
+	@After
+	public void finalize(){
+		File confFile = new File(CommonString.PATH_BASE_TEST +
+				CommonString.NAME_CONF_DB);
+		confFile.delete();
+	}
+	
 	
 	@Test
 	public void createDatabeFromFileTest(){
@@ -207,8 +219,13 @@ public class SqliteDbTest {
 	
 	@Test
 	public void getValueFKTest(){
-		//Object object = this.sqliteDb.getValueFK("persona", "fk_trabajo",9999);
-		/*assertNull(object);
+		
+		this.sqliteDb.getValueConfFK().put("persona.fk_trabajo", "nombre");
+		this.sqliteDb. generateConfig();
+		
+		
+		Object object = this.sqliteDb.getValueFK("persona", "fk_trabajo",9999);
+		assertNull(object);
 		
 		object = this.sqliteDb.getValueFK("persona", "fk_trabajo_fake",1);
 		assertNull(object);
@@ -217,10 +234,10 @@ public class SqliteDbTest {
 		assertNull(object);
 		
 		object = this.sqliteDb.getValueFK("personaFake", "fk_trabajo_Fake",9999999);
-		assertNull(object);*/
+		assertNull(object);
 		
 		
-		Object object = this.sqliteDb.getValueFK("persona", "fk_trabajo",1);
+		object = this.sqliteDb.getValueFK("persona", "fk_trabajo",1);
 		assertEquals(object, "programador");
 		
 		
@@ -230,7 +247,6 @@ public class SqliteDbTest {
 		object = this.sqliteDb.getValueFK("persona", "fk_trabajo",3);
 		assertEquals(object, "plomero");
 
-		
 	}
 	
 	

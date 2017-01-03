@@ -1,7 +1,5 @@
 package org.neverNows.excel;
 
-import static org.junit.Assert.fail;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 

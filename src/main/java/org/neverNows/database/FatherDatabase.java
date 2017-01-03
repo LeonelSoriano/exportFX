@@ -1,12 +1,21 @@
 package org.neverNows.database;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.neverNows.SqlJsonNoEqualParamException;
 import org.neverNows.database.beans.FKMapper;
 import org.neverNows.database.beans.StructureTable;
+import org.neverNows.param.CommonString;
+import org.neverNows.until.FileUntil;
 
 public abstract class FatherDatabase {
 	
@@ -20,7 +29,7 @@ public abstract class FatherDatabase {
 	protected String sqlSelectAll;
 	protected String sqlTruncate;
 	private Map<String , String> valueConfFK;
-	
+	private boolean isTest = true;
 	
 	
 	public FatherDatabase(String driver, String database){
@@ -34,10 +43,90 @@ public abstract class FatherDatabase {
 	 * genera el archivo de configuracion de la base de datos
 	 */
 	public void generateConfig(){
+
+		JSONObject jsonObject = new JSONObject();
 		
+		JSONArray jsonArrayFK = new JSONArray();
+		
+		for (Map.Entry<String, String> entry : this.valueConfFK.entrySet())
+		{
+			String key = entry.getKey();
+			String value = entry.getValue();
+		    JSONObject itemFK = new  JSONObject();
+		    itemFK.put(key.toUpperCase(), value);
+		    jsonArrayFK.put(itemFK);
+		}
+		
+		jsonObject.put("fk_config", jsonArrayFK);
+		
+		try {
+			
+			String basePAth = "";
+			if(isTest){
+				basePAth = CommonString.PATH_BASE_TEST;
+			}else{
+				basePAth = CommonString.PATH_BASE;
+			}
+			
+			File newTextFile = new File(basePAth + CommonString.NAME_CONF_DB);
+			FileWriter fw = new FileWriter(newTextFile);
+			fw.write(jsonObject.toString());
+			fw.close();
+
+		} catch (IOException iox) {
+			iox.printStackTrace();
+		}
 		
 	}
 	
+	
+	/**
+	 * obiene la configuracion del archivo de confuiguracion de db 
+	 * la configuracion de la db de las fk
+	 * @return configuracion de las fk de la db
+	 */
+	public Map<String, String> getFKConfiguration(){
+		
+		Map<String, String> resultMap = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+		
+		FileUntil fileUntil = new FileUntil();
+		
+		String basePAth = "";
+		if(isTest){
+			basePAth = CommonString.PATH_BASE_TEST;
+		}else{
+			basePAth = CommonString.PATH_BASE;
+		}
+		
+		if(!(new File(basePAth + CommonString.NAME_CONF_DB).exists())){
+			return null;
+		}
+		
+		String textFileConf = fileUntil.txtToString(
+				basePAth + CommonString.NAME_CONF_DB);
+		
+		JSONObject jsonObject = new JSONObject(textFileConf);
+		
+		JSONArray fkConfig = jsonObject.getJSONArray("fk_config");
+		
+		//for (Map.Entry<String, String> entry : fkConfg.entrySet()){
+		
+		
+		for(int i = 0; i < fkConfig.length(); i++ ){
+			JSONObject itemConfig = fkConfig.getJSONObject(i);
+			Iterator<String> keysItemConf = itemConfig.keys();
+			
+			while (keysItemConf.hasNext()) {
+				String key = keysItemConf.next();
+				String value = itemConfig.getString(key);
+				
+				resultMap.put(key, value);
+			}
+			
+		}
+			
+		return resultMap;
+	}
 	
 	/**
 	 * @author leonelsoriano3@gmail.com

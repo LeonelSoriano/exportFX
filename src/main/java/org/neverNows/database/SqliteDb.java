@@ -408,7 +408,6 @@ public class SqliteDb extends FatherDatabase{
 		List<FKMapper> fkMappers = this.getMapperFKInTable(nameTable);
 		
 		
-		
 		if(fkMappers.isEmpty()){
 			return null;
 		}
@@ -417,9 +416,8 @@ public class SqliteDb extends FatherDatabase{
 		FKMapper fkMapper = null;
 		
 		for(int i = 0; i < fkMappers.size() ; i++){
-			if(fkMappers.get(i).getNamecolumn().toUpperCase().equals(
-					column.toUpperCase())){
-				
+			if(fkMappers.get(i).getNamecolumn().equalsIgnoreCase(
+					column)){
 				fkMapper = fkMappers.get(i);
 				break;
 			}
@@ -438,7 +436,6 @@ public class SqliteDb extends FatherDatabase{
     	StructureTable structureTable = this.getStructureTable(fkMapper.getNameTableRef());
     	
     	
-    	
     	if(structureTable == null){
     		return null;
     	}
@@ -448,8 +445,23 @@ public class SqliteDb extends FatherDatabase{
     	
     	StringBuilder builder = new StringBuilder();
     	
+    	
+    	String aliasNameFK = fkMapper.getNamecolumnRef();
+    	
+    	// esto espara leer lo que esta enelarchivo de cof para
+    	//saber a que columna esta aputnadno la fk
+    	Map<String, String> fkMap = this.getFKConfiguration();
+    	if(fkMap != null){
+    		String aliasColumnFK = fkMap.get(fkMapper.getNameTable()+ "." +
+    				fkMapper.getNamecolumn());
+    		
+    		if(aliasColumnFK != null){
+    			aliasNameFK = aliasColumnFK;
+    		}
+    	}
+    	
     	builder.append("SELECT ");
-    	builder.append(fkMapper.getNamecolumnRef());
+    	builder.append(aliasNameFK);
     	builder.append(" as valueFK FROM ");
     	builder.append(fkMapper.getNameTableRef());
     	builder.append(" WHERE ");
@@ -467,7 +479,7 @@ public class SqliteDb extends FatherDatabase{
     	
     	
     	//SELECT * FROM TABLE WHERE COLUMN = VALUE
-    	
+    	//TODO aca tengo q agregar los del fk y saber q tiene
        	try {
 
     		String sql = builder.toString();
@@ -483,7 +495,7 @@ public class SqliteDb extends FatherDatabase{
 
         }catch (Exception e) {
         	System.err.println(e.getMessage());
-        	return null;
+        	
 		}
     	finally {
             if (handle != null) {

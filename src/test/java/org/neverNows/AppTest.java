@@ -31,7 +31,7 @@ public class AppTest{
     	
     	Handle handle = null;
     	DBI dbi = new DBI("jdbc:sqlite:/home/leonel/exportFX/src/test/db/export.db");
-    	
+        
     	try {
 
     		String sql = "select * FROM ejemplo";
