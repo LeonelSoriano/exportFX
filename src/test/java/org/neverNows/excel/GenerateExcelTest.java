@@ -5,23 +5,28 @@ import java.lang.reflect.Method;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.neverNows.database.SqliteDb;
+import org.nevernows.excel.GenerateExcel;
 
 public class GenerateExcelTest {
 
 	private GenerateExcel generateExcel;
-	private SqliteDb sqliteDb;
+
 	
 	@Before
 	public void init(){
-		this.sqliteDb = new SqliteDb("test/db/ejemplo.db");
-		this.generateExcel = new GenerateExcel(true, this.sqliteDb);
+		this.generateExcel = new GenerateExcel("test/db/ejemplo.db",true);
+		this.generateExcel.addFkConf("persona.fk_trabajo","nombre");
+		this.generateExcel.addManyConf("padre_hijo.fk_padre", "padre.nombre");
+		this.generateExcel.addManyConf("padre_hijo.fk_hijo", "hijo.nombre");
 	}
 	
 	@Test
 	public void generateFromDBTest(){
 		this.generateExcel.addWordToReplace("no_parametro", "Sin Parametros");
 		this.generateExcel.addWordToReplace("fk_trabajo", "Trabajo");
+		this.generateExcel.addWordToReplace("fk_hijo", "Hijo");
+		this.generateExcel.addWordToReplace("fk_padre", "Padre");
+
 		this.generateExcel.generateFromDB(); 
 	}
 	

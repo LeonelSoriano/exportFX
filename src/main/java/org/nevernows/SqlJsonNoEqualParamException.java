@@ -1,4 +1,4 @@
-package org.neverNows;
+package org.nevernows;
 
 /**
  * excepcion que verifica que la cantidad de parametros del json
