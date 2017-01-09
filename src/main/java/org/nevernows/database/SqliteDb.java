@@ -1,29 +1,32 @@
-package org.neverNows.database;
+package org.nevernows.database;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
-import org.neverNows.SqlJsonNoEqualParamException;
-import org.neverNows.database.beans.FKMapper;
-import org.neverNows.database.beans.StructureItemTable;
-import org.neverNows.database.beans.StructureTable;
-import org.neverNows.enumeration.SqliteTypeEnum;
-import org.neverNows.param.CommonString;
-import org.neverNows.param.DriverList;
-import org.neverNows.until.ComandTerminal;
-import org.neverNows.until.FileUntil;
+import org.nevernows.SqlJsonNoEqualParamException;
+import org.nevernows.database.beans.FKMapper;
+import org.nevernows.database.beans.StructureItemTable;
+import org.nevernows.database.beans.StructureTable;
+import org.nevernows.enumeration.SqliteTypeEnum;
+import org.nevernows.param.CommonString;
+import org.nevernows.param.DriverList;
+import org.nevernows.until.ComandTerminal;
+import org.nevernows.until.FileUntil;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.Query;
+import org.skife.jdbi.v2.exceptions.UnableToCreateStatementException;
 
 public class SqliteDb extends FatherDatabase{
 
+	private Logger logger = Logger.getLogger(SqliteDb.class.getName());
 	
 	private String sqlDumpTable;
 	
@@ -57,13 +60,13 @@ public class SqliteDb extends FatherDatabase{
 		
 		List<String> result = new ArrayList<>();
 		
-    	Handle handle = null;
+    
     	DBI dbi = new DBI(getDriverString());
     	
-    	try {
+    	
 
     		String sql = this.sqlGetAllTables;
-            handle = dbi.open();
+    		Handle handle = dbi.open();
             Query<Map<String, Object>> q = handle.createQuery(sql);
             List<Map<String, Object>> l = q.list();
 
@@ -71,9 +74,9 @@ public class SqliteDb extends FatherDatabase{
             
             	String tableName = m.get("name").toString().toLowerCase();
             	
-            	if(m.get("type").toString().toLowerCase().equals("table")){
+            	if(m.get("type").toString().equalsIgnoreCase("table")){
             		
-            		if(tableName.equals("sqlite_sequence")){
+            		if("sqlite_sequence".equals(tableName)){
             			continue;
             		}else{
             			result.add(tableName);
@@ -81,15 +84,8 @@ public class SqliteDb extends FatherDatabase{
             	}
             }
 
-        }catch (Exception e) {
-        	System.err.println(e.getMessage());
-        	return new ArrayList<>();
-		}
-    	finally {
-            if (handle != null) {
-                handle.close();
-            }
-        }
+ 
+        handle.close();
 		
 		return result;
 	}
@@ -112,7 +108,7 @@ public class SqliteDb extends FatherDatabase{
             Query<Map<String, Object>> q = handle.createQuery(sql);
             List<Map<String, Object>> l = q.list();
 
-            if(l.size() == 0){
+            if(l.isEmpty()){
             	return null;
             }
             
@@ -494,6 +490,7 @@ public class SqliteDb extends FatherDatabase{
             }
 
         }catch (Exception e) {
+        	
         	System.err.println(e.getMessage());
         	
 		}
@@ -659,7 +656,7 @@ public class SqliteDb extends FatherDatabase{
 						tmpValueReferenceSearch.append(dumpSql.charAt(i));
 
 						if(tmpValueReferenceSearch.toString().
-								toUpperCase().equals(tokenReference)){
+								equalsIgnoreCase(tokenReference)){
 							referenceSearchModeForeinTable = true;		
 							tmpValueReferenceSearch.delete(0, refTableValue.length());
 						}
@@ -804,21 +801,18 @@ public class SqliteDb extends FatherDatabase{
 					throw new SqlJsonNoEqualParamException();
 				}
 				
-				try {
-			        Object value = tmpJson.get(key);
+			
+		        Object value = tmpJson.get(key);
 			        
-			        if(itemTableTmp.getType().equals(SqliteTypeEnum.BLOB.name()) ||
-			        		itemTableTmp.getType().equals(SqliteTypeEnum.TEXT.name()) ){
-			        	builder.append("'" + value + "'");
+		        if(itemTableTmp.getType().equals(SqliteTypeEnum.BLOB.name()) ||
+	        		itemTableTmp.getType().equals(SqliteTypeEnum.TEXT.name()) ){
+		        	builder.append("'" + value + "'");
 			        	
-			        }else{
-			        	builder.append(value);
-			        }
-			        
-			        
-			    } catch (JSONException e) {
-			        
-			    }
+		        }else{
+		        	builder.append(value);
+		        }
+			   
+			   
 				
 			}
 			
@@ -826,83 +820,57 @@ public class SqliteDb extends FatherDatabase{
 			builder.append(") ");
 		}
 		builder.append(";");
+
 		
-		//TODO: guardar en base de datos probar si el inser multiple sirve
-		// si no cambiarlo a varios insert
-		
-    	Handle handle = null;
     	DBI dbi = new DBI(getDriverString());
         
-        try {
-            handle = dbi.open();
-            handle.execute(builder.toString());
+   
+    	Handle handle = dbi.open();
+        handle.execute(builder.toString());
             
-        }catch (Exception e) {
-        	System.err.println(e.getMessage());	
-		}
-    	finally {
-            if (handle != null) {
-                handle.close();
-            }
-        }
-        
+     
+       handle.close();
+
 	}
 
 	@Override
 	public Integer countTable(String nameTable) {
 		
-    	Handle handle = null;
-    	DBI dbi = new DBI(getDriverString());
-    	
-    	try {
 
+    	DBI dbi = new DBI(getDriverString());
+    	Handle handle = dbi.open();
+    	try{
     		String sql = this.sqlCountTable.replaceAll("<<nameTable>>", nameTable);
-            handle = dbi.open();
-            Query<Map<String, Object>> q = handle.createQuery(sql);
-            List<Map<String, Object>> l = q.list();
+			
+        	Query<Map<String, Object>> q = handle.createQuery(sql);
+        	List<Map<String, Object>> l = q.list();
 
             for (Map<String, Object> m : l) {
             	
-            	if (handle != null) {
-                    handle.close();
-                }
+                handle.close();
             	
             	return (Integer)m.get("total");
             }
 
-        }catch (Exception e) {
-        	System.err.println(e.getMessage());
-        	return null;
-		}
-    	finally {
-            if (handle != null) {
-                handle.close();
-            }
-        }
-    	
+    	}catch (UnableToCreateStatementException e) {
+    		logger.log(Level.WARNING, e.getMessage(), e);
+    		handle.close();
+    	}
+		
 		return null;
 	}
 
 	
 	@Override
 	public void cleanTable(String nameTable) {
-    	
-		Handle handle = null;
+    
     	DBI dbi = new DBI(getDriverString());
         
-        try {
-            handle = dbi.open();
-            handle.execute(this.sqlTruncate.replace("<<nameTable>>",nameTable));
-            
-        }catch (Exception e) {
-        	System.err.println(e.getMessage());	
-		}
-    	finally {
-            if (handle != null) {
-                handle.close();
-            }
-        }
-		
+    	Handle handle = dbi.open();
+        handle.execute(this.sqlTruncate.replace("<<nameTable>>",nameTable));
+ 
+        handle.close();
+               	
 	}
 
 

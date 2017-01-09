@@ -1,4 +1,4 @@
-package org.neverNows.database;
+package org.nevernows.database;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -8,16 +8,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.neverNows.SqlJsonNoEqualParamException;
-import org.neverNows.database.beans.FKMapper;
-import org.neverNows.database.beans.StructureTable;
-import org.neverNows.param.CommonString;
-import org.neverNows.until.FileUntil;
+import org.nevernows.SqlJsonNoEqualParamException;
+import org.nevernows.database.beans.FKMapper;
+import org.nevernows.database.beans.StructureTable;
+import org.nevernows.param.CommonString;
+import org.nevernows.until.FileUntil;
 
 public abstract class FatherDatabase {
+	
+	private Logger logger = Logger.getLogger(SqliteDb.class.getName());;
 	
 	protected String driver;
 	
@@ -29,6 +33,9 @@ public abstract class FatherDatabase {
 	protected String sqlSelectAll;
 	protected String sqlTruncate;
 	private Map<String , String> valueConfFK;
+	private Map<String, String> valueConfManyToMany;
+	
+	
 	private boolean isTest = true;
 	
 	
@@ -36,6 +43,7 @@ public abstract class FatherDatabase {
 		this.driver = driver;
 		this.database = database;
 		this.valueConfFK = new HashMap<>();
+		this.valueConfManyToMany = new HashMap<>();
 	}
 	
 	
@@ -59,9 +67,22 @@ public abstract class FatherDatabase {
 		
 		jsonObject.put("fk_config", jsonArrayFK);
 		
+		JSONArray jsonManyToMany = new JSONArray();
+		
+		for (Map.Entry<String, String> entry : this.valueConfManyToMany.entrySet())
+		{
+			String key = entry.getKey();
+			String value = entry.getValue();
+		    JSONObject itemManyToMany = new  JSONObject();
+		    itemManyToMany.put(key.toUpperCase(), value.toUpperCase());
+		    jsonManyToMany.put(itemManyToMany);
+		}
+		
+		jsonObject.put("many_to_many", jsonManyToMany);
+		
 		try {
 			
-			String basePAth = "";
+			String basePAth;
 			if(isTest){
 				basePAth = CommonString.PATH_BASE_TEST;
 			}else{
@@ -74,9 +95,55 @@ public abstract class FatherDatabase {
 			fw.close();
 
 		} catch (IOException iox) {
-			iox.printStackTrace();
+			logger.log(Level.SEVERE, iox.getMessage(), iox);
 		}
 		
+	}
+	
+	
+	/**
+	 *  obiene la configuracion del archivo de confuiguracion de db 
+	 *  con sus configuraciones de many to many
+	 * @return la configuracion de many to many parceada a un map
+	 */
+	public Map<String, String> getManyToManyConfiguration() {
+		
+		Map<String, String> resultMap = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+		
+		FileUntil fileUntil = new FileUntil();
+		
+		String basePAth = "";
+		if(isTest){
+			basePAth = CommonString.PATH_BASE_TEST;
+		}else{
+			basePAth = CommonString.PATH_BASE;
+		}
+		
+		if(!(new File(basePAth + CommonString.NAME_CONF_DB).exists())){
+			return null;
+		}
+		
+		String textFileConf = fileUntil.txtToString(
+				basePAth + CommonString.NAME_CONF_DB);
+		
+		JSONObject jsonObject = new JSONObject(textFileConf);
+		
+		JSONArray manyToManyConfig = jsonObject.getJSONArray("many_to_many");
+		
+		for(int i = 0; i < manyToManyConfig.length(); i++ ){
+			JSONObject itemConfig = manyToManyConfig.getJSONObject(i);
+			Iterator<String> keysItemConf = itemConfig.keys();
+			
+			while (keysItemConf.hasNext()) {
+				String key = keysItemConf.next();
+				String value = itemConfig.getString(key);
+				
+				resultMap.put(key, value);
+			}
+			
+		}
+			
+		return resultMap;
 	}
 	
 	
@@ -283,7 +350,12 @@ public abstract class FatherDatabase {
 		return valueConfFK;
 	}
 
+	public Map<String, String> getValueConfManyToMany(){
+		return this.valueConfManyToMany;
+	}
 
 
+
+ 
 	
 }

@@ -1,4 +1,4 @@
-package org.neverNows.database.beans;
+package org.nevernows.database.beans;
 
 import java.util.ArrayList;
 import java.util.List;

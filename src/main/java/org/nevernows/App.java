@@ -1,4 +1,4 @@
-package org.neverNows;
+package org.nevernows;
 
 
 import javafx.application.Application;

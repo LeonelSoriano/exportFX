@@ -4,9 +4,9 @@ import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.neverNows.database.SqliteDb;
-import org.neverNows.database.beans.StructureItemTable;
-import org.neverNows.database.beans.StructureTable;
+import org.nevernows.database.SqliteDb;
+import org.nevernows.database.beans.StructureItemTable;
+import org.nevernows.database.beans.StructureTable;
 
 public class StructureTableTest {
 

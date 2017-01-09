@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.neverNows.until.ComandTerminal;
+import org.nevernows.until.ComandTerminal;
 
 public class ComandTerminalTest {
 

@@ -1,4 +1,4 @@
-package org.neverNows.excel;
+package org.nevernows.excel;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -17,26 +19,29 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.neverNows.database.FatherDatabase;
-import org.neverNows.database.beans.StructureItemTable;
-import org.neverNows.database.beans.StructureTable;
-import org.neverNows.param.CommonString;
+import org.nevernows.database.FatherDatabase;
+import org.nevernows.database.SqliteDb;
+import org.nevernows.database.beans.StructureItemTable;
+import org.nevernows.database.beans.StructureTable;
+import org.nevernows.param.CommonString;
 
 /**
  * clase que general el excel desde la base de datos
- * 
- * @author leonelsoriano3@gmail.com
+ * date: 01-09-2016
+ * @author leonelsoriano3@gmail.com 
  * @version 1.0
  */
 public class GenerateExcel {
-
+	
+	private Logger logger = Logger.getLogger(SqliteDb.class.getName());
+	
 	private XSSFWorkbook workbook;
 
 	private FatherDatabase database;
 
-	private final static String NAME_FILE = "massive_load.xlsx";
+	private static final String NAME_FILE = "massive_load.xlsx";
 
-	private final static String NAME_FILE_CONFIGURATION = "config.json";
+	private  static final String NAME_FILE_CONFIGURATION = "config.json";
 
 	private String basePAth;
 
@@ -46,13 +51,20 @@ public class GenerateExcel {
 
 	private Map<String, XSSFSheet> mapTableSheet;
 
-	public GenerateExcel(boolean isTest, FatherDatabase database) {
+	
+	/**
+	 * genera un excel desde la base de datos
+	 * @param los parametros de la base de datos
+	 * @param isTest si esta en pruebas esto no deberia de ir aca pero lo 
+	 * puse :P
+	 */
+	public GenerateExcel(String databaseStr, boolean isTest) {
 
+		this.database = new SqliteDb(databaseStr);
+		
 		this.replaceWord = new HashMap<>();
 
 		this.workbook = new XSSFWorkbook();
-
-		this.database = database;
 
 		this.mapTableSheet = new HashMap<>();
 
@@ -69,6 +81,14 @@ public class GenerateExcel {
 	 */
 	public void generateFromDB() {
 
+		
+		//genero la configuracion
+		this.database.generateConfig();
+		
+		Map<String, String> fkConfiguration = this.database.getFKConfiguration();
+		
+		
+		
 		tablesOrder = this.database.getOrderTableByDump("test/db/export.sql");
 
 		for (String tableName : tablesOrder) {
@@ -96,8 +116,8 @@ public class GenerateExcel {
 
 			data.put("0", titleRow.toArray());
 
-			if (structureTable.getItemTables().size() > 0
-					&& structureTable.getItemTables().get(0).getDataValues().size() > 0) {
+			if (!structureTable.getItemTables().isEmpty()
+					&& !structureTable.getItemTables().get(0).getDataValues().isEmpty()) {
 
 				int dataLenght = structureTable.getItemTables().get(0).getDataValues().size();
 
@@ -108,11 +128,36 @@ public class GenerateExcel {
 					List<String> dataRow = new ArrayList<>();
 
 					for (int j = 0; j < columnLenght; j++) {
+						
 						Object objectData = structureTable.getItemTables().get(j).getDataValues().get(i);
+						
+						//TODO: me falta ahora los combos aca debo saber cual sera many to many
+						// asi que me falta un metodo para agregarla la configuracion del many
+						// to any al configurador json de la db ademas de eso obtener el dato del fk
+						// de aca abajo es decir traer el valor de verdad del fk
+						
 
+						//TODO: tengo que desaparecer la columna de many to many que estara en la tabla
+						// de quiebre esto mas q todo es estetico
+						
+						//aca pregunto si es fk y esta en la configuracion 
+						//eso para cambiarle el dato por el del fk
+						if( structureTable.getItemTables().get(j).isFk() &&
+								fkConfiguration.containsKey((tableName + titleRow.get(j)).toUpperCase())){
+							
+							Object valueConfFk = this.database.getValueFK(
+									tableName, titleRow.get(i), objectData);
+							if(valueConfFk != null){
+								dataRow.add(valueConfFk.toString());
+							}else{
+								dataRow.add(objectData.toString());
+							}
+						}else{
+							dataRow.add(objectData.toString());
+						}
 						
 						
-						dataRow.add(objectData.toString());
+						//dataRow.add("leonel");
 
 					}
 
@@ -224,16 +269,18 @@ public class GenerateExcel {
 
 		jsonConfig.put("replace", jsonRemplaceWord);
 
-		try {
 
+		try {
 			File newTextFile = new File(this.basePAth + NAME_FILE_CONFIGURATION);
-			FileWriter fw = new FileWriter(newTextFile);
+			FileWriter fw;
+			fw = new FileWriter(newTextFile);
 			fw.write(jsonConfig.toString());
 			fw.close();
-
-		} catch (IOException iox) {
-			iox.printStackTrace();
+		} catch (IOException e) {
+			logger.log(Level.SEVERE, e.getMessage(), e);
 		}
+			
+		
 	}
 
 	/**
@@ -250,18 +297,19 @@ public class GenerateExcel {
 
 	private void createFile() {
 		try {
-			FileOutputStream out = new FileOutputStream(new File(new String(this.basePAth + NAME_FILE)));
-
+			FileOutputStream out = new FileOutputStream(new File(this.basePAth + NAME_FILE));
 			workbook.write(out);
-
 		} catch (IOException e) {
-
-			e.printStackTrace();
+			logger.log(Level.SEVERE, e.getMessage(), e);
 		}
 	}
 
 	public void addFkConf(String table, String columnFK){
 		this.database.getValueConfFK().put(table, columnFK);
+	}
+	
+	public void addManyConf(String table, String column){
+		this.database.getValueConfManyToMany().put(table, column);
 	}
 
 }

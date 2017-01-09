@@ -12,12 +12,11 @@ import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.neverNows.SqlJsonNoEqualParamException;
-import org.neverNows.database.SqliteDb;
-import org.neverNows.database.beans.FKMapper;
-import org.neverNows.database.beans.StructureItemTable;
-import org.neverNows.database.beans.StructureTable;
-import org.neverNows.param.CommonString;
+import org.nevernows.SqlJsonNoEqualParamException;
+import org.nevernows.database.SqliteDb;
+import org.nevernows.database.beans.FKMapper;
+import org.nevernows.database.beans.StructureTable;
+import org.nevernows.param.CommonString;
 
 
 public class SqliteDbTest {
@@ -32,7 +31,7 @@ public class SqliteDbTest {
 	
 	
 	@After
-	public void finalize(){
+	public void finalizeClass(){
 		File confFile = new File(CommonString.PATH_BASE_TEST +
 				CommonString.NAME_CONF_DB);
 		confFile.delete();
@@ -45,7 +44,7 @@ public class SqliteDbTest {
 		sqliteDbDatabeFromFile.createDatabeFromFile( "test/db/export.sql");
 		
 		assertEquals(sqliteDbDatabeFromFile.tableIsParam("persona"), true);
-		assertEquals(sqliteDbDatabeFromFile.getStructureTables().size() , 4);
+		assertEquals(sqliteDbDatabeFromFile.getStructureTables().size() , 7);
 	}
 
 	
@@ -56,7 +55,7 @@ public class SqliteDbTest {
 		
 		assertNotNull("un problea no a devuelto nada",data);
 		
-		assertEquals( "valor debe ser de 4",4, data.size());
+		assertEquals( "valor debe ser de 7",7, data.size());
 		
 		int countEqual = 0;
 		
@@ -135,7 +134,7 @@ public class SqliteDbTest {
 	
 	@Test
 	public void getStructureTablesTest(){
-		assertEquals(this.sqliteDb.getStructureTables().size() , 4);
+		assertEquals(this.sqliteDb.getStructureTables().size() , 7);
 	}
 	
 	@Test
@@ -144,6 +143,9 @@ public class SqliteDbTest {
 		assertEquals(sqliteDb.tableIsParam("ejemplo"), true);
 		assertEquals(sqliteDb.tableIsParam("trabajo"), true);
 		assertEquals(sqliteDb.tableIsParam("no_parametro"), false);
+		assertEquals(sqliteDb.tableIsParam("padre"), false);
+		assertEquals(sqliteDb.tableIsParam("hijo"), false);
+		assertEquals(sqliteDb.tableIsParam("padre_hijo"), false);
 	}
 	
 	@Test
@@ -170,8 +172,11 @@ public class SqliteDbTest {
 		
 		assertEquals(tablesOrder.get(0), "trabajo");
 		assertEquals(tablesOrder.get(1), "persona");
-		assertEquals(tablesOrder.get(2), "no_parametro");
-		assertEquals(tablesOrder.get(3), "ejemplo");	
+		assertEquals(tablesOrder.get(2), "padre_hijo");
+		assertEquals(tablesOrder.get(3), "padre");
+		assertEquals(tablesOrder.get(4), "no_parametro");
+		assertEquals(tablesOrder.get(5), "hijo");	
+		assertEquals(tablesOrder.get(6), "ejemplo");	
 	}
 	
 	@Test
@@ -179,7 +184,7 @@ public class SqliteDbTest {
 		Class<? extends SqliteDb> classReflextion = this.sqliteDb.getClass();
 		
 		String returnForTable = "CREATE TABLE 'persona' (	`id`	"
-				+ "INTEGER PRIMARY KEY AUTOINCREMENT,	`nombre`	NUMERIC"
+				+ "INTEGER PRIMARY KEY AUTOINCREMENT,	`nombre`	TEXT(50)"
 				+ " NOT NULL,	`alias`	TEXT,	`cedula`	NUMERIC UNIQUE,	"
 				+ "`fk_trabajo`	INTEGER NOT NULL,	FOREIGN KEY(`fk_trabajo`) "
 				+ "REFERENCES `trabajo`(`id`))";
@@ -253,11 +258,14 @@ public class SqliteDbTest {
 	
 	@Test
 	public void getNamePrimaryKeyTest(){
-		assertEquals(this.sqliteDb.getNamePrimaryKey("fake_table"), "id");
+		assertEquals(this.sqliteDb.getNamePrimaryKey("fake_table"), null);
 		assertEquals(this.sqliteDb.getNamePrimaryKey("ejemplo"), "id");
 		assertEquals(this.sqliteDb.getNamePrimaryKey("no_parametro"), "id");
 		assertEquals(this.sqliteDb.getNamePrimaryKey("persona"), "id");
 		assertEquals(this.sqliteDb.getNamePrimaryKey("trabajo"), "id");
+		assertEquals(this.sqliteDb.getNamePrimaryKey("padre"), "id_padre");
+		assertEquals(this.sqliteDb.getNamePrimaryKey("hijo"), "id_hijo");
+		assertEquals(this.sqliteDb.getNamePrimaryKey("padre_hijo"), null);
 	}
 	
 	
@@ -300,6 +308,9 @@ public class SqliteDbTest {
 		assertEquals(this.sqliteDb.countTable("no_parametro"), new Integer(0));
 		assertEquals(this.sqliteDb.countTable("persona"), new Integer(3));
 		assertEquals(this.sqliteDb.countTable("trabajo"), new Integer(5));
+		assertEquals(this.sqliteDb.countTable("padre"), new Integer(0));
+		assertEquals(this.sqliteDb.countTable("hijo"), new Integer(0));
+		assertEquals(this.sqliteDb.countTable("padre_hijo"), new Integer(0));
 		assertNull(this.sqliteDb.countTable("fake_table"));
 	}
 

@@ -1,4 +1,4 @@
-package org.neverNows.database.beans;
+package org.nevernows.database.beans;
 
 /**
  * mapea una tabla con su foreing key

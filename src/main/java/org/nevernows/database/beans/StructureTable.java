@@ -1,8 +1,9 @@
-package org.neverNows.database.beans;
+package org.nevernows.database.beans;
 
-import org.neverNows.database.beans.StructureItemTable;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.nevernows.database.beans.StructureItemTable;
 
 
 /**

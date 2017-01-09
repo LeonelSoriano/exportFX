@@ -1,4 +1,4 @@
-package org.neverNows.until;
+package org.nevernows.until;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
